@@ -24,7 +24,8 @@ h2 { font-size: 36px; margin: 0 0 30px; }
 .contacts { height: 490px; padding: 28px; background: #f5f6f7; margin-bottom: 16px; }
 .contact { margin-bottom: 25px; font-size: 25px; line-height: 1.4; }
 .contact strong { display: block; font-size: 23px; }
-.photo { background: #d4dce1; color: #607580; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 30px; }
+.photo { background: #d4dce1; color: #607580; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 30px; position: relative; overflow: hidden; min-height: 0; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .small-photo { flex: 1; }
 .large-photo { flex: 1; margin-bottom: 16px; }
 footer { height: 210px; display: flex; align-items: center; justify-content: space-around; color: #173B49; }
@@ -89,13 +90,12 @@ footer { height: 210px; display: flex; align-items: center; justify-content: spa
       </div>
     </section>
     <div class="photo small-photo">
-      Fotografi 1<br>
-      eller tillfällig information
+      <img src="foto1.jpeg" alt="Arbetets museum och Katscha">
     </div>
   </div>
 </div>
 <div class="photo large-photo">
-  Fotografi 2 – Katscha
+  <img src="foto2.jpeg" alt="Katscha vid Strömmen">
 </div>
 <footer>
   <div class="time-area">
@@ -109,7 +109,7 @@ footer { height: 210px; display: flex; align-items: center; justify-content: spa
   </div>
 </footer>
 <div class="version">
-  Katscha Info 2027 | v0.3 | TESTVERSION
+  Katscha Info 2027 | v0.4 | TESTVERSION
 </div>
 </div>
 </div>
