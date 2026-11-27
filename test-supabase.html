@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Katscha Info 2027 – Anslutningstest</title>
+  <style>
+    body {
+      background: #123047;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 24px;
+      max-width: 420px;
+      margin: 40px auto;
+    }
+    input, button {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 0;
+      font-size: 16px;
+    }
+    button {
+      background: white;
+      color: #123047;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Katscha Info 2027</h1>
+  <p>v0.5 – Anslutningstest</p>
+
+  <form id="login">
+    <input id="email" type="email"
+      placeholder="E-postadress"
+      autocomplete="username" required>
+
+    <input id="password" type="password"
+      placeholder="Lösenord"
+      autocomplete="current-password" required>
+
+    <button type="submit">Logga in</button>
+  </form>
+
+  <button id="test">Testa databasåtkomst</button>
+  <button id="logout">Logga ut</button>
+
+  <pre id="result">Ansluter...</pre>
+
+  <script type="module">
+    import { createClient } from
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const supabase = createClient(
+      'https://gwfhatjzaeqwsqwp uplg.supabase.co'.replace(/\s/g, ''),
+      'sb_publishable_FBP7gtSKrb1JBFmJz4rmcg_Oji7AgSV',
+      {
+        auth: {
+          persistSession: false
+        }
+      }
+    );
+
+    const result = document.getElementById('result');
+
+    async function testAccess() {
+      result.textContent = 'Testar databasåtkomst...';
+
+      const { data, error } = await supabase
+        .from('screens')
+        .select('id,address,active');
+
+      if (error) {
+        result.textContent =
+          'Åtkomst nekad eller anslutningsfel:\n' +
+          error.message;
+      } else if (!data || data.length === 0) {
+        result.textContent =
+          'Ingen information tillgänglig.';
+      } else {
+        result.textContent =
+          'Databasåtkomst fungerar!\n\n' +
+          data.map(screen =>
+            screen.address + '\nAktiv: ' +
+            (screen.active ? 'Ja' : 'Nej')
+          ).join('\n\n');
+      }
+    }
+
+    document.getElementById('login')
+      .addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const email =
+          document.getElementById('email').value;
+        const password =
+          document.getElementById('password').value;
+
+        result.textContent = 'Loggar in...';
+
+        const { error } =
+          await supabase.auth.signInWithPassword({
+            email, password
+          });
+
+        document.getElementById('password').value = '';
+
+        if (error) {
+          result.textContent =
+            'Inloggningen misslyckades:\n' +
+            error.message;
+        } else {
+          await testAccess();
+        }
+      });
+
+    document.getElementById('test')
+      .addEventListener('click', testAccess);
+
+    document.getElementById('logout')
+      .addEventListener('click', async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          result.textContent = error.message;
+        } else {
+          await testAccess();
+        }
+      });
+
+    result.textContent = 'Redo för anslutningstest.';
+  </script>
+
+</body>
+</html>
