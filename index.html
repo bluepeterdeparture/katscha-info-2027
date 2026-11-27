@@ -20,14 +20,18 @@ h2 { font-size: 36px; margin: 0 0 30px; }
 .floor { margin-bottom: 12px; }
 .floor strong { display: block; font-size: 27px; margin-bottom: 4px; }
 .floor span { display: block; font-size: 29px; line-height: 1.2; }
-.right { flex: 1; display: flex; flex-direction: column; }
-.contacts { height: 490px; padding: 28px; background: #f5f6f7; margin-bottom: 16px; }
+.right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.contacts { height: 490px; padding: 28px; background: #f5f6f7; margin-bottom: 16px; overflow: hidden; }
 .contact { margin-bottom: 25px; font-size: 25px; line-height: 1.4; }
 .contact strong { display: block; font-size: 23px; }
+.details { white-space: pre-wrap; overflow-wrap: anywhere; }
 .photo { background: #d4dce1; color: #607580; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 30px; position: relative; overflow: hidden; min-height: 0; }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .small-photo { flex: 1; }
 .large-photo { flex: 1; margin-bottom: 16px; }
+#notice { position: absolute; inset: 0; background: #f5f6f7; color: #173B49; padding: 32px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+#notice-heading { font-size: 42px; margin: 0 0 20px; overflow-wrap: anywhere; }
+#notice-message { font-size: 32px; line-height: 1.3; white-space: pre-wrap; overflow-wrap: anywhere; }
 footer { height: 210px; display: flex; align-items: center; justify-content: space-around; color: #173B49; }
 .time-area { text-align: center; }
 #clock { font-size: 76px; font-weight: bold; }
@@ -41,9 +45,9 @@ footer { height: 210px; display: flex; align-items: center; justify-content: spa
 </style>
 </head>
 <body>
-<form id="login"><h2>Katscha Info 2027</h2><p>v011 – Aktivera visning</p><input id="email" type="email" placeholder="E-postadress" autocomplete="username" required><input id="password" type="password" placeholder="Lösenord" autocomplete="current-password" required><button type="submit">Logga in</button><p id="status" role="status"></p></form>
+<form id="login"><h2>Katscha Info 2027</h2><p>v012 – Aktivera visning</p><input id="email" type="email" placeholder="E-postadress" autocomplete="username" required><input id="password" type="password" placeholder="Lösenord" autocomplete="current-password" required><button type="submit">Logga in</button><p id="status" role="status"></p></form>
 <form id="setup" hidden><h2>Välj entré</h2><select id="entrance" aria-label="Välj entré"></select><button type="submit">Starta visning</button><p id="setup-status" role="status"></p></form>
-<div id="frame" hidden><div id="board"><header><h1 id="address"></h1></header><div class="main"><section class="residents"><h2>Boende</h2><div id="resident-list" role="status"></div></section><div class="right"><section class="contacts"><h2>Felanmälan</h2><div class="contact"><strong>FASTIGHET (PEMA)</strong>Kontaktuppgifter</div><div class="contact"><strong>HISS</strong>Kontaktuppgifter</div><div class="contact"><strong>STÖRNINGSJOUR</strong>Kontaktuppgifter</div><div class="contact"><strong>BRF KATSCHA STYRELSE</strong>Kontaktuppgifter</div></section><div class="photo small-photo"><img src="foto1.jpeg" alt="Arbetets museum och Katscha"></div></div></div><div class="photo large-photo"><img src="foto2.jpeg" alt="Katscha vid Strömmen"></div><footer><div class="time-area"><div id="clock">00:00</div><div id="date"></div></div><div class="boluna">Föreningsinformation<div class="qr-placeholder">QR</div>Besök Boluna</div></footer><div class="version">Katscha Info 2027 | v011 | TESTVERSION</div></div></div>
+<div id="frame" hidden><div id="board"><header><h1 id="address"></h1></header><div class="main"><section class="residents"><h2>Boende</h2><div id="resident-list" role="status"></div></section><div class="right"><section class="contacts"><h2>Felanmälan</h2><div class="contact"><strong>FASTIGHET (PEMA)</strong><div class="details" id="contact-pema">Kontaktuppgifter</div></div><div class="contact"><strong>HISS</strong><div class="details" id="contact-hiss">Kontaktuppgifter</div></div><div class="contact"><strong>STÖRNINGSJOUR</strong><div class="details" id="contact-jour">Kontaktuppgifter</div></div><div class="contact"><strong>BRF KATSCHA STYRELSE</strong><div class="details" id="contact-styrelse">Kontaktuppgifter</div></div></section><div class="photo small-photo"><img src="foto1.jpeg" alt="Arbetets museum och Katscha"></div></div></div><div class="photo large-photo"><img id="lower-photo" src="foto2.jpeg" alt="Katscha vid Strömmen"><div id="notice" hidden><h2 id="notice-heading"></h2><div id="notice-message"></div></div></div><footer><div class="time-area"><div id="clock">00:00</div><div id="date"></div></div><div class="boluna">Föreningsinformation<div class="qr-placeholder">QR</div>Besök Boluna</div></footer><div class="version">Katscha Info 2027 | v012 | TESTVERSION</div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const el = id => document.getElementById(id);
@@ -57,13 +61,16 @@ const key = 'katscha-v09-display-entrance';
 let screens = [], generation = 0;
 let activeEntrance = null, refreshTimer = null, lastList = null;
 const REFRESH_MS = 5 * 60 * 1000;
+const contactIds=['pema','hiss','jour','styrelse'];
+function current(id,request){return request===generation&&activeEntrance===id;}
+function clearExtras(){for(const id of contactIds)el('contact-'+id).textContent='Kontaktuppgifter';el('notice').hidden=true;el('lower-photo').hidden=false;el('notice-heading').textContent='';el('notice-message').textContent='';}
 function stopRefresh(){ clearTimeout(refreshTimer); refreshTimer=null; activeEntrance=null; lastList=null; }
-function hideBoard(message) { stopRefresh(); generation++; screens=[]; el('frame').hidden=true; el('setup').hidden=true; el('login').hidden=false; el('status').textContent=message||''; el('resident-list').replaceChildren(); }
+function hideBoard(message) { stopRefresh(); generation++; screens=[]; el('frame').hidden=true; el('setup').hidden=true; el('login').hidden=false; el('status').textContent=message||''; el('resident-list').replaceChildren(); clearExtras(); }
 async function refreshResidents(id, request) {
  const list=el('resident-list');
  try {
   const {data,error}=await client.from('residents').select('floor,name,sort_order').eq('screen_id',id).order('sort_order').order('id');
-  if(request!==generation||activeEntrance!==id)return;
+  if(!current(id,request))return;
   if(error)throw error;
   const rows=data||[], signature=JSON.stringify(rows);
   if(signature!==lastList){
@@ -75,16 +82,28 @@ async function refreshResidents(id, request) {
    }
    list.replaceChildren(fragment);lastList=signature;
   }
- } catch(_) {if(request===generation&&activeEntrance===id&&lastList===null)list.textContent='Boendelistan kunde inte hämtas.';}
- finally {if(request===generation&&activeEntrance===id){refreshTimer=setTimeout(()=>refreshResidents(id,request),REFRESH_MS);}}
+ } catch(_) {if(current(id,request)&&lastList===null)list.textContent='Boendelistan kunde inte hämtas.';}
+}
+async function refreshContacts(id,request){
+ try{const {data,error}=await client.from('katscha_contacts').select('id,details');if(!current(id,request))return;if(error||!data||contactIds.some(k=>!data.some(r=>r.id===k)))return;
+ for(const k of contactIds)el('contact-'+k).textContent=data.find(r=>r.id===k).details||'';
+ }catch(_){}
+}
+async function refreshNotice(id,request){
+ try{const {data,error}=await client.from('katscha_notices').select('screen_id,enabled,heading,message').eq('screen_id',id).single();if(!current(id,request)||error||!data)return;
+ el('notice-heading').textContent=data.heading||'';el('notice-heading').hidden=!data.heading;el('notice-message').textContent=data.message||'';el('notice').hidden=!data.enabled;el('lower-photo').hidden=!!data.enabled;
+ }catch(_){}
+}
+async function refreshBoard(id,request){
+ try{await Promise.all([refreshResidents(id,request),refreshContacts(id,request),refreshNotice(id,request)]);}finally{if(current(id,request))refreshTimer=setTimeout(()=>refreshBoard(id,request),REFRESH_MS);}
 }
 async function showEntrance(id) {
  const screen=screens.find(s=>s.id===id); if(!screen) return hideBoard('Ingen aktiv entré.');
- stopRefresh(); activeEntrance=id;
+ stopRefresh(); clearExtras(); activeEntrance=id;
  try {if(!fixed)localStorage.setItem(key,id);}catch(_){}
  el('address').textContent=screen.address;el('login').hidden=true;el('setup').hidden=true;el('frame').hidden=false;resizeBoard();
  const request=++generation;el('resident-list').textContent='Hämtar boendelista…';
- await refreshResidents(id,request);
+ await refreshBoard(id,request);
 }
 async function loadScreens(){ stopRefresh(); const request=++generation; const {data:sessionData,error:sessionError}=await client.auth.getSession(); if(request!==generation)return; if(sessionError||!sessionData.session)return hideBoard('Logga in en gång för att aktivera skärmen.'); const {data,error}=await client.from('screens').select('id,address,active').eq('active',true).order('id'); if(request!==generation)return; if(error||!data||!data.length)return hideBoard('Ingen information tillgänglig.'); screens=data; if(fixed)return showEntrance(fixed); let saved;try{saved=localStorage.getItem(key);}catch(_){} if(screens.some(s=>s.id===saved)&&new URLSearchParams(location.search).get('setup')!=='1')return showEntrance(saved); const select=el('entrance');select.replaceChildren();screens.forEach(s=>{const option=document.createElement('option');option.value=s.id;option.textContent=s.address;select.appendChild(option);});if(screens.some(s=>s.id===saved))select.value=saved;el('login').hidden=true;el('frame').hidden=true;el('setup').hidden=false; }
 el('setup').addEventListener('submit',e=>{e.preventDefault();showEntrance(el('entrance').value);});
