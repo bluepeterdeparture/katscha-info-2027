@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katscha Info 2027</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; background: #222; font-family: Arial, Helvetica, sans-serif; }
+body { display: flex; align-items: center; justify-content: center; }
+#frame { position: relative; overflow: hidden; }
+#board { position: absolute; width: 1080px; height: 1920px; padding: 30px;
+background: #8FBFC9; color: #263238; transform-origin: top left; display: flex;
+flex-direction: column; }
+header { height: 150px; display: flex; align-items: center; color: #173B49; }
+h1 { font-size: 60px; margin: 0; }
+h2 { font-size: 36px; margin: 0 0 30px; }
+.main { display: flex; height: 1000px; margin-bottom: 16px; }
+.residents { width: 44%; padding: 28px; background: #f5f6f7; margin-right: 16px;
+}
+.floor { margin-bottom: 12px; }
+.floor strong { display: block; font-size: 27px; margin-bottom: 4px; }
+.floor span { display: block; font-size: 29px; line-height: 1.2; }
+.right { flex: 1; display: flex; flex-direction: column; }
+.contacts { height: 490px; padding: 28px; background: #f5f6f7; margin-bottom:
+16px; }
+.contact { margin-bottom: 25px; font-size: 25px; line-height: 1.4; }
+.contact strong { display: block; font-size: 23px; }
+.photo { background: #d4dce1; color: #607580; display: flex; align-items:
+center; justify-content: center; text-align: center; font-size: 30px; position:
+relative; overflow: hidden; min-height: 0; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.small-photo { flex: 1; }
+.large-photo { flex: 1; margin-bottom: 16px; }
+footer { height: 210px; display: flex; align-items: center; justify-content:
+space-around; color: #173B49; }
+.time-area { text-align: center; }
+#clock { font-size: 76px; font-weight: bold; }
+#date { font-size: 25px; margin-top: 10px; }
+.boluna { text-align: center; font-size: 25px; }
+.qr-placeholder { background: white; color: #52636e; width: 100px; height:
+100px; margin: 10px auto; display: flex; align-items: center; justify-content:
+center; font-size: 23px; }
+.version { font-size: 17px; color: #173B49; text-align: center; }
+#login { width: min(90vw, 420px); color: white; background: #112e40; padding: 24px; border-radius: 12px; }
+#login input, #login button { display: block; width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; }
+#controls { position: fixed; top: 8px; right: 8px; z-index: 5; }
+#controls select, #controls button { font-size: 16px; padding: 6px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<form id="login">
+<h2>Katscha Info 2027</h2>
+<p>v0.8 – Logga in</p>
+<input id="email" type="email" placeholder="E-postadress" autocomplete="username" required>
+<input id="password" type="password" placeholder="Lösenord" autocomplete="current-password" required>
+<button type="submit">Logga in</button>
+<p id="status" role="status"></p>
+</form>
+<div id="controls" hidden><select id="entrance" aria-label="Välj entré"></select> <button id="logout">Logga ut</button></div>
+<div id="frame" hidden>
+<div id="board">
+<header>
+<h1 id="address"></h1>
+</header>
+<div class="main">
+<section class="residents">
+<h2>Boende</h2>
+<div id="resident-list" role="status"></div>
+</section>
+<div class="right">
+<section class="contacts">
+<h2>Felanmälan</h2>
+<div class="contact">
+<strong>FASTIGHET (PEMA)</strong>
+Kontaktuppgifter
+</div>
+<div class="contact">
+<strong>HISS</strong>
+Kontaktuppgifter
+</div>
+<div class="contact">
+<strong>STÖRNINGSJOUR</strong>
+Kontaktuppgifter
+</div>
+<div class="contact">
+<strong>BRF KATSCHA STYRELSE</strong>
+Kontaktuppgifter
+</div>
+</section>
+<div class="photo small-photo">
+<img src="foto1.jpeg" alt="Arbetets museum och Katscha">
+</div>
+</div>
+</div>
+<div class="photo large-photo">
+<img src="foto2.jpeg" alt="Katscha vid Strömmen">
+</div>
+<footer>
+<div class="time-area">
+<div id="clock">00:00</div>
+<div id="date"></div>
+</div>
+<div class="boluna">
+Föreningsinformation
+<div class="qr-placeholder">QR</div>
+Besök Boluna
+</div>
+</footer>
+<div class="version">
+Katscha Info 2027 | v0.8 | TESTVERSION
+</div>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+function resizeBoard() {
+var scale = Math.min(
+window.innerWidth / 1080,
+window.innerHeight / 1920
+);
+var frame = document.getElementById("frame");
+var board = document.getElementById("board");
+frame.style.width = (1080 * scale) + "px";
+frame.style.height = (1920 * scale) + "px";
+board.style.transform = "scale(" + scale + ")";
+}
+function updateClock() {
+var now = new Date();
+var time = now.toLocaleTimeString("sv-SE", {
+timeZone: "Europe/Stockholm",
+hour: "2-digit",
+minute: "2-digit",
+hour12: false
+});
+var date = now.toLocaleDateString("sv-SE", {
+timeZone: "Europe/Stockholm",
+weekday: "long",
+day: "numeric",
+month: "long",
+year: "numeric"
+});
+document.getElementById("clock").textContent = time;
+document.getElementById("date").textContent = date;
+}
+window.addEventListener("resize", resizeBoard);
+resizeBoard();
+updateClock();
+setInterval(updateClock, 1000);
+
+const client = window.supabase.createClient(
+  'https://gwfhatjzaeqwsqwpuplg.supabase.co',
+  'sb_publishable_FBP7gtSKrb1JBFmJz4rmcg_Oji7AgSV'
+);
+const el = id => document.getElementById(id);
+const requestedScreen = new URLSearchParams(location.search).get('screen');
+const displayMode = ['2b','2c','2d'].includes(requestedScreen);
+const entranceKey = displayMode ? 'katscha-display-' + requestedScreen : 'katscha-entrance';
+el('logout').hidden = displayMode;
+let screens = [];
+let residentRequest = 0;
+function hideBoard(message) {
+  el('frame').hidden = true;
+  el('controls').hidden = true;
+  el('login').hidden = false;
+  el('status').textContent = message || '';
+  screens = [];
+  residentRequest++;
+  el('resident-list').replaceChildren();
+}
+async function showEntrance() {
+  const screen = screens.find(s => s.id === el('entrance').value);
+  if (!screen) return hideBoard('Ingen aktiv entré.');
+  el('address').textContent = screen.address;
+  try { localStorage.setItem(entranceKey, screen.id); } catch (_) {}
+  resizeBoard();
+  const request = ++residentRequest;
+  const list = el('resident-list');
+  list.textContent = 'Hämtar boendelista…';
+  try {
+    const {data, error} = await client.from('residents')
+      .select('floor,name,sort_order').eq('screen_id', screen.id)
+      .order('sort_order').order('id');
+    if (request !== residentRequest) return;
+    if (error) throw error;
+    list.replaceChildren();
+    if (!data || !data.length) {
+      list.textContent = 'Ingen boendelista tillgänglig.';
+      return;
+    }
+    const floors = new Map();
+    for (const resident of data) {
+      if (!floors.has(resident.floor)) {
+        const group = document.createElement('div');
+        group.className = 'floor';
+        const heading = document.createElement('strong');
+        heading.textContent = resident.floor;
+        group.appendChild(heading);
+        list.appendChild(group);
+        floors.set(resident.floor, group);
+      }
+      const name = document.createElement('span');
+      name.textContent = resident.name;
+      floors.get(resident.floor).appendChild(name);
+    }
+  } catch (_) {
+    if (request === residentRequest) list.textContent = 'Boendelistan kunde inte hämtas.';
+  }
+}
+async function loadScreens() {
+  const {data: sessionData, error: sessionError} = await client.auth.getSession();
+  if (sessionError || !sessionData.session) return hideBoard(displayMode ? 'Logga in en gång för att aktivera skärmen.' : 'Logga in för att visa information.');
+  const {data, error} = await client.from('screens').select('id,address,active').eq('active', true).order('id');
+  if (error || !data || !data.length) return hideBoard('Ingen information tillgänglig.');
+  screens = data;
+  const select = el('entrance');
+  select.replaceChildren();
+  screens.forEach(s => { const option = document.createElement('option'); option.value = s.id; option.textContent = s.address; select.appendChild(option); });
+  let saved;
+  try { saved = localStorage.getItem(entranceKey); } catch (_) {}
+  if (screens.some(s => s.id === saved)) select.value = saved;
+  else if (displayMode && screens.some(s => s.id === requestedScreen)) select.value = requestedScreen;
+  el('login').hidden = true;
+  el('frame').hidden = false;
+  el('controls').hidden = false;
+  await showEntrance();
+}
+el('login').addEventListener('submit', async e => {
+  e.preventDefault();
+  el('status').textContent = 'Ansluter…';
+  try {
+    const {error} = await client.auth.signInWithPassword({email: el('email').value.trim(), password: el('password').value});
+    if (error) return hideBoard('Inloggningen misslyckades: ' + error.message);
+    await loadScreens();
+  } catch (_) { hideBoard('Anslutningen misslyckades.'); }
+  finally { el('password').value = ''; }
+});
+el('entrance').addEventListener('change', showEntrance);
+el('logout').addEventListener('click', async () => {
+  const {error} = await client.auth.signOut();
+  hideBoard(error ? 'Utloggning misslyckades. Försök igen.' : 'Utloggad.');
+});
+client.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') hideBoard('Utloggad.'); });
+loadScreens().catch(() => hideBoard('Anslutningen misslyckades.'));
+</script>
+</body>
+</html>
