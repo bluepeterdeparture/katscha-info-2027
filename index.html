@@ -17,9 +17,9 @@ h1 { font-size: 60px; margin: 0; }
 h2 { font-size: 36px; margin: 0 0 30px; }
 .main { display: flex; height: 1000px; margin-bottom: 16px; }
 .residents { width: 44%; padding: 28px; background: #f5f6f7; margin-right: 16px; }
-.floor { margin-bottom: 35px; }
-.floor strong { display: block; font-size: 27px; margin-bottom: 12px; }
-.floor span { display: block; font-size: 29px; line-height: 1.5; }
+.floor { margin-bottom: 12px; }
+.floor strong { display: block; font-size: 27px; margin-bottom: 4px; }
+.floor span { display: block; font-size: 29px; line-height: 1.2; }
 .right { flex: 1; display: flex; flex-direction: column; }
 .contacts { height: 490px; padding: 28px; background: #f5f6f7; margin-bottom: 16px; }
 .contact { margin-bottom: 25px; font-size: 25px; line-height: 1.4; }
@@ -35,118 +35,60 @@ footer { height: 210px; display: flex; align-items: center; justify-content: spa
 .boluna { text-align: center; font-size: 25px; }
 .qr-placeholder { background: white; color: #52636e; width: 100px; height: 100px; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 23px; }
 .version { font-size: 17px; color: #173B49; text-align: center; }
+#login, #setup { width: min(90vw, 420px); color: white; background: #112e40; padding: 24px; border-radius: 12px; }
+#login input, #login button, #setup select, #setup button { display: block; width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; }
+[hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<div id="frame">
-<div id="board">
-<header>
-  <h1>Källvindsgatan 2B</h1>
-</header>
-<div class="main">
-  <section class="residents">
-    <h2>Boende</h2>
-    <div class="floor">
-      <strong>VÅNING 5</strong>
-      <span>Exempelnamn A</span>
-    </div>
-    <div class="floor">
-      <strong>VÅNING 4</strong>
-      <span>Exempelnamn B</span>
-      <span>Exempelnamn C</span>
-    </div>
-    <div class="floor">
-      <strong>VÅNING 3</strong>
-      <span>Exempelnamn D</span>
-      <span>Exempelnamn E</span>
-    </div>
-    <div class="floor">
-      <strong>VÅNING 2 B</strong>
-      <span>Exempelnamn F</span>
-    </div>
-    <div class="floor">
-      <strong>VÅNING 2</strong>
-      <span>Exempelnamn G</span>
-    </div>
-  </section>
-  <div class="right">
-    <section class="contacts">
-      <h2>Felanmälan</h2>
-      <div class="contact">
-        <strong>FASTIGHET (PEMA)</strong>
-        Kontaktuppgifter
-      </div>
-      <div class="contact">
-        <strong>HISS</strong>
-        Kontaktuppgifter
-      </div>
-      <div class="contact">
-        <strong>STÖRNINGSJOUR</strong>
-        Kontaktuppgifter
-      </div>
-      <div class="contact">
-        <strong>BRF KATSCHA STYRELSE</strong>
-        Kontaktuppgifter
-      </div>
-    </section>
-    <div class="photo small-photo">
-      <img src="foto1.jpeg" alt="Arbetets museum och Katscha">
-    </div>
-  </div>
-</div>
-<div class="photo large-photo">
-  <img src="foto2.jpeg" alt="Katscha vid Strömmen">
-</div>
-<footer>
-  <div class="time-area">
-    <div id="clock">00:00</div>
-    <div id="date"></div>
-  </div>
-  <div class="boluna">
-    Föreningsinformation
-    <div class="qr-placeholder">QR</div>
-    Besök Boluna
-  </div>
-</footer>
-<div class="version">
-  Katscha Info 2027 | v0.4 | TESTVERSION
-</div>
-</div>
-</div>
+<form id="login"><h2>Katscha Info 2027</h2><p>v011 – Aktivera visning</p><input id="email" type="email" placeholder="E-postadress" autocomplete="username" required><input id="password" type="password" placeholder="Lösenord" autocomplete="current-password" required><button type="submit">Logga in</button><p id="status" role="status"></p></form>
+<form id="setup" hidden><h2>Välj entré</h2><select id="entrance" aria-label="Välj entré"></select><button type="submit">Starta visning</button><p id="setup-status" role="status"></p></form>
+<div id="frame" hidden><div id="board"><header><h1 id="address"></h1></header><div class="main"><section class="residents"><h2>Boende</h2><div id="resident-list" role="status"></div></section><div class="right"><section class="contacts"><h2>Felanmälan</h2><div class="contact"><strong>FASTIGHET (PEMA)</strong>Kontaktuppgifter</div><div class="contact"><strong>HISS</strong>Kontaktuppgifter</div><div class="contact"><strong>STÖRNINGSJOUR</strong>Kontaktuppgifter</div><div class="contact"><strong>BRF KATSCHA STYRELSE</strong>Kontaktuppgifter</div></section><div class="photo small-photo"><img src="foto1.jpeg" alt="Arbetets museum och Katscha"></div></div></div><div class="photo large-photo"><img src="foto2.jpeg" alt="Katscha vid Strömmen"></div><footer><div class="time-area"><div id="clock">00:00</div><div id="date"></div></div><div class="boluna">Föreningsinformation<div class="qr-placeholder">QR</div>Besök Boluna</div></footer><div class="version">Katscha Info 2027 | v011 | TESTVERSION</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-function resizeBoard() {
-  var scale = Math.min(
-    window.innerWidth / 1080,
-    window.innerHeight / 1920
-  );
-  var frame = document.getElementById("frame");
-  var board = document.getElementById("board");
-  frame.style.width = (1080 * scale) + "px";
-  frame.style.height = (1920 * scale) + "px";
-  board.style.transform = "scale(" + scale + ")";
+const el = id => document.getElementById(id);
+function resizeBoard() { var scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920); el('frame').style.width = (1080 * scale) + 'px'; el('frame').style.height = (1920 * scale) + 'px'; el('board').style.transform = 'scale(' + scale + ')'; }
+function updateClock() { var now = new Date(); el('clock').textContent = now.toLocaleTimeString('sv-SE',{timeZone:'Europe/Stockholm',hour:'2-digit',minute:'2-digit',hour12:false}); el('date').textContent = now.toLocaleDateString('sv-SE',{timeZone:'Europe/Stockholm',weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+window.addEventListener('resize',resizeBoard); resizeBoard(); updateClock(); setInterval(updateClock,1000);
+const client = window.supabase.createClient('https://gwfhatjzaeqwsqwpuplg.supabase.co','sb_publishable_FBP7gtSKrb1JBFmJz4rmcg_Oji7AgSV',{auth:{storageKey:'katscha-v09-display-auth'}});
+const requested = new URLSearchParams(location.search).get('screen');
+const fixed = ['2b','2c','2d'].includes(requested) ? requested : null;
+const key = 'katscha-v09-display-entrance';
+let screens = [], generation = 0;
+let activeEntrance = null, refreshTimer = null, lastList = null;
+const REFRESH_MS = 5 * 60 * 1000;
+function stopRefresh(){ clearTimeout(refreshTimer); refreshTimer=null; activeEntrance=null; lastList=null; }
+function hideBoard(message) { stopRefresh(); generation++; screens=[]; el('frame').hidden=true; el('setup').hidden=true; el('login').hidden=false; el('status').textContent=message||''; el('resident-list').replaceChildren(); }
+async function refreshResidents(id, request) {
+ const list=el('resident-list');
+ try {
+  const {data,error}=await client.from('residents').select('floor,name,sort_order').eq('screen_id',id).order('sort_order').order('id');
+  if(request!==generation||activeEntrance!==id)return;
+  if(error)throw error;
+  const rows=data||[], signature=JSON.stringify(rows);
+  if(signature!==lastList){
+   const fragment=document.createDocumentFragment(), floors=new Map();
+   if(!rows.length)fragment.appendChild(document.createTextNode('Ingen boendelista tillgänglig.'));
+   for(const resident of rows){
+    if(!floors.has(resident.floor)){const group=document.createElement('div');group.className='floor';const heading=document.createElement('strong');heading.textContent=resident.floor;group.appendChild(heading);fragment.appendChild(group);floors.set(resident.floor,group);}
+    const name=document.createElement('span');name.textContent=resident.name;floors.get(resident.floor).appendChild(name);
+   }
+   list.replaceChildren(fragment);lastList=signature;
+  }
+ } catch(_) {if(request===generation&&activeEntrance===id&&lastList===null)list.textContent='Boendelistan kunde inte hämtas.';}
+ finally {if(request===generation&&activeEntrance===id){refreshTimer=setTimeout(()=>refreshResidents(id,request),REFRESH_MS);}}
 }
-function updateClock() {
-  var now = new Date();
-  var time = now.toLocaleTimeString("sv-SE", {
-    timeZone: "Europe/Stockholm",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  });
-  var date = now.toLocaleDateString("sv-SE", {
-    timeZone: "Europe/Stockholm",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  });
-  document.getElementById("clock").textContent = time;
-  document.getElementById("date").textContent = date;
+async function showEntrance(id) {
+ const screen=screens.find(s=>s.id===id); if(!screen) return hideBoard('Ingen aktiv entré.');
+ stopRefresh(); activeEntrance=id;
+ try {if(!fixed)localStorage.setItem(key,id);}catch(_){}
+ el('address').textContent=screen.address;el('login').hidden=true;el('setup').hidden=true;el('frame').hidden=false;resizeBoard();
+ const request=++generation;el('resident-list').textContent='Hämtar boendelista…';
+ await refreshResidents(id,request);
 }
-window.addEventListener("resize", resizeBoard);
-resizeBoard();
-updateClock();
-setInterval(updateClock, 1000);
-</script>
-</body>
-</html>
+async function loadScreens(){ stopRefresh(); const request=++generation; const {data:sessionData,error:sessionError}=await client.auth.getSession(); if(request!==generation)return; if(sessionError||!sessionData.session)return hideBoard('Logga in en gång för att aktivera skärmen.'); const {data,error}=await client.from('screens').select('id,address,active').eq('active',true).order('id'); if(request!==generation)return; if(error||!data||!data.length)return hideBoard('Ingen information tillgänglig.'); screens=data; if(fixed)return showEntrance(fixed); let saved;try{saved=localStorage.getItem(key);}catch(_){} if(screens.some(s=>s.id===saved)&&new URLSearchParams(location.search).get('setup')!=='1')return showEntrance(saved); const select=el('entrance');select.replaceChildren();screens.forEach(s=>{const option=document.createElement('option');option.value=s.id;option.textContent=s.address;select.appendChild(option);});if(screens.some(s=>s.id===saved))select.value=saved;el('login').hidden=true;el('frame').hidden=true;el('setup').hidden=false; }
+el('setup').addEventListener('submit',e=>{e.preventDefault();showEntrance(el('entrance').value);});
+el('login').addEventListener('submit',async e=>{e.preventDefault();el('status').textContent='Ansluter…';try{const {error}=await client.auth.signInWithPassword({email:el('email').value.trim(),password:el('password').value});if(error)return hideBoard('Inloggningen misslyckades: '+error.message);await loadScreens();}catch(_){hideBoard('Anslutningen misslyckades.');}finally{el('password').value='';}});
+client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')hideBoard('Utloggad.');});
+loadScreens().catch(()=>hideBoard('Anslutningen misslyckades.'));
+</script></body></html>
